@@ -233,6 +233,7 @@ public class VideoPlayer extends CordovaPlugin implements OnCompletionListener, 
             @Override
             public void surfaceDestroyed(SurfaceHolder holder) {
                 player.release();
+                dialog.dismiss();
             }
 
             @Override
