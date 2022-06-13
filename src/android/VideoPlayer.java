@@ -6,6 +6,7 @@ import android.content.DialogInterface;
 import android.content.DialogInterface.OnDismissListener;
 import android.content.DialogInterface.OnKeyListener;
 import android.content.res.AssetFileDescriptor;
+import android.graphics.SurfaceTexture;
 import android.media.MediaPlayer;
 import android.media.MediaPlayer.OnCompletionListener;
 import android.media.MediaPlayer.OnErrorListener;
@@ -15,13 +16,13 @@ import android.os.Build;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.KeyEvent;
-import android.view.SurfaceHolder;
+import android.view.TextureView;
+import android.view.Surface;
 import android.view.Window;
 import android.view.WindowInsets;
 import android.view.WindowManager;
 import android.view.WindowManager.LayoutParams;
 import android.widget.LinearLayout;
-import android.widget.VideoView;
 
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.CordovaArgs;
@@ -137,9 +138,37 @@ public class VideoPlayer extends CordovaPlugin implements OnCompletionListener, 
         main.setHorizontalGravity(Gravity.CENTER_HORIZONTAL);
         main.setVerticalGravity(Gravity.CENTER_VERTICAL);
 
-        VideoView videoView = new VideoView(cordova.getActivity());
-        videoView.setLayoutParams(new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
-        main.addView(videoView);
+        TextureView textureView = new TextureView(cordova.getActivity());
+        textureView.setSurfaceTextureListener(new TextureView.SurfaceTextureListener() {
+            @Override
+            public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
+                player.setSurface(new Surface(surface));
+                try {
+                    player.prepare();
+                } catch (Exception e) {
+                    PluginResult result = new PluginResult(PluginResult.Status.ERROR, e.getLocalizedMessage());
+                    result.setKeepCallback(false); // release status callback in JS side
+                    callbackContext.sendPluginResult(result);
+                    callbackContext = null;
+                }
+            }
+
+            @Override
+            public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
+                player.release();
+                dialog.dismiss();
+
+                return true;
+            }
+            
+            @Override
+            public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {}
+
+            @Override
+            public void onSurfaceTextureUpdated(SurfaceTexture surface) {}
+        });
+
+        main.addView(textureView);
 
         player = new MediaPlayer();
         player.setOnPreparedListener(this);
@@ -213,33 +242,6 @@ public class VideoPlayer extends CordovaPlugin implements OnCompletionListener, 
                 return;
             }
         }
-
-        final SurfaceHolder mHolder = videoView.getHolder();
-        mHolder.setKeepScreenOn(true);
-        mHolder.addCallback(new SurfaceHolder.Callback() {
-            @Override
-            public void surfaceCreated(SurfaceHolder holder) {
-                player.setDisplay(holder);
-                try {
-                    player.prepare();
-                } catch (Exception e) {
-                    PluginResult result = new PluginResult(PluginResult.Status.ERROR, e.getLocalizedMessage());
-                    result.setKeepCallback(false); // release status callback in JS side
-                    callbackContext.sendPluginResult(result);
-                    callbackContext = null;
-                }
-            }
-
-            @Override
-            public void surfaceDestroyed(SurfaceHolder holder) {
-                player.release();
-                dialog.dismiss();
-            }
-
-            @Override
-            public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-            }
-        });
 
         WindowManager.LayoutParams lp = new WindowManager.LayoutParams();
         lp.copyFrom(dialog.getWindow().getAttributes());
