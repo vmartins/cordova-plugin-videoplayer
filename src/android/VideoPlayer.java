@@ -118,10 +118,12 @@ public class VideoPlayer extends CordovaPlugin implements OnCompletionListener, 
 
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
     protected void openVideoDialog(String path, JSONObject options) {
+        cordova.getActivity().getWindow().addFlags(LayoutParams.FLAG_KEEP_SCREEN_ON);
         // Let's create the main dialog
         dialog = new Dialog(cordova.getActivity(), android.R.style.Theme_NoTitleBar);
         dialog.getWindow().getAttributes().windowAnimations = android.R.style.Animation_Dialog;
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        dialog.getWindow().addFlags(LayoutParams.FLAG_KEEP_SCREEN_ON);
         dialog.setCancelable(false);
         dialog.setOnDismissListener(this);
         dialog.setOnKeyListener(this);
@@ -137,8 +139,10 @@ public class VideoPlayer extends CordovaPlugin implements OnCompletionListener, 
         main.setOrientation(LinearLayout.VERTICAL);
         main.setHorizontalGravity(Gravity.CENTER_HORIZONTAL);
         main.setVerticalGravity(Gravity.CENTER_VERTICAL);
+        main.setKeepScreenOn(true);
 
         TextureView textureView = new TextureView(cordova.getActivity());
+        textureView.setKeepScreenOn(true);
         textureView.setSurfaceTextureListener(new TextureView.SurfaceTextureListener() {
             @Override
             public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
