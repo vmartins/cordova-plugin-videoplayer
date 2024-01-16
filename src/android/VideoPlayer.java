@@ -128,7 +128,11 @@ public class VideoPlayer extends CordovaPlugin implements OnCompletionListener, 
         dialog.setOnDismissListener(this);
         dialog.setOnKeyListener(this);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            dialog.getWindow().getInsetsController().hide(WindowInsets.Type.statusBars());
+            try {
+                dialog.getWindow().getInsetsController().hide(WindowInsets.Type.statusBars());
+            } catch (Exception e) {
+                dialog.getWindow().setFlags(LayoutParams.FLAG_FULLSCREEN, LayoutParams.FLAG_FULLSCREEN);
+            }
         } else {
             dialog.getWindow().setFlags(LayoutParams.FLAG_FULLSCREEN, LayoutParams.FLAG_FULLSCREEN);
         }
